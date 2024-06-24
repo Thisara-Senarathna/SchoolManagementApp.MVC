@@ -21,7 +21,8 @@ namespace SchoolManagementApp.MVC.Controllers
         // GET: Classes
         public async Task<IActionResult> Index()
         {
-            return View(await _context.Students.ToListAsync());
+            var schoolManagementDbContext = _context.Classes.Include(q => q.Course).Include(q => q.Lecturer);
+            return View(await schoolManagementDbContext.ToListAsync());
         }
 
         // GET: Classes/Details/5
@@ -32,19 +33,23 @@ namespace SchoolManagementApp.MVC.Controllers
                 return NotFound();
             }
 
-            var student = await _context.Students
+            var @class = await _context.Classes
+                .Include(q => q.Course)
+                .Include(q => q.Lecturer)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (student == null)
+            if (@class == null)
             {
                 return NotFound();
             }
 
-            return View(student);
+            return View(@class);
         }
 
         // GET: Classes/Create
         public IActionResult Create()
         {
+            ViewData["CourseId"] = new SelectList(_context.Courses, "Id", "Id");
+            ViewData["LecturerId"] = new SelectList(_context.Lecturers, "Id", "Id");
             return View();
         }
 
@@ -53,15 +58,17 @@ namespace SchoolManagementApp.MVC.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,FirstName,LastName,DateOfBirth")] Student student)
+        public async Task<IActionResult> Create([Bind("Id,LecturerId,CourseId,Time")] Class @class)
         {
             if (ModelState.IsValid)
             {
-                _context.Add(student);
+                _context.Add(@class);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
             }
-            return View(student);
+            ViewData["CourseId"] = new SelectList(_context.Courses, "Id", "Id", @class.CourseId);
+            ViewData["LecturerId"] = new SelectList(_context.Lecturers, "Id", "Id", @class.LecturerId);
+            return View(@class);
         }
 
         // GET: Classes/Edit/5
@@ -72,12 +79,14 @@ namespace SchoolManagementApp.MVC.Controllers
                 return NotFound();
             }
 
-            var student = await _context.Students.FindAsync(id);
-            if (student == null)
+            var @class = await _context.Classes.FindAsync(id);
+            if (@class == null)
             {
                 return NotFound();
             }
-            return View(student);
+            ViewData["CourseId"] = new SelectList(_context.Courses, "Id", "Id", @class.CourseId);
+            ViewData["LecturerId"] = new SelectList(_context.Lecturers, "Id", "Id", @class.LecturerId);
+            return View(@class);
         }
 
         // POST: Classes/Edit/5
@@ -85,9 +94,9 @@ namespace SchoolManagementApp.MVC.Controllers
         // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,FirstName,LastName,DateOfBirth")] Student student)
+        public async Task<IActionResult> Edit(int id, [Bind("Id,LecturerId,CourseId,Time")] Class @class)
         {
-            if (id != student.Id)
+            if (id != @class.Id)
             {
                 return NotFound();
             }
@@ -96,12 +105,12 @@ namespace SchoolManagementApp.MVC.Controllers
             {
                 try
                 {
-                    _context.Update(student);
+                    _context.Update(@class);
                     await _context.SaveChangesAsync();
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    if (!StudentExists(student.Id))
+                    if (!ClassExists(@class.Id))
                     {
                         return NotFound();
                     }
@@ -112,7 +121,9 @@ namespace SchoolManagementApp.MVC.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(student);
+            ViewData["CourseId"] = new SelectList(_context.Courses, "Id", "Id", @class.CourseId);
+            ViewData["LecturerId"] = new SelectList(_context.Lecturers, "Id", "Id", @class.LecturerId);
+            return View(@class);
         }
 
         // GET: Classes/Delete/5
@@ -123,14 +134,16 @@ namespace SchoolManagementApp.MVC.Controllers
                 return NotFound();
             }
 
-            var student = await _context.Students
+            var @class = await _context.Classes
+                .Include(q => q.Course)
+                .Include(q => q.Lecturer)
                 .FirstOrDefaultAsync(m => m.Id == id);
-            if (student == null)
+            if (@class == null)
             {
                 return NotFound();
             }
 
-            return View(student);
+            return View(@class);
         }
 
         // POST: Classes/Delete/5
@@ -138,19 +151,19 @@ namespace SchoolManagementApp.MVC.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var student = await _context.Students.FindAsync(id);
-            if (student != null)
+            var @class = await _context.Classes.FindAsync(id);
+            if (@class != null)
             {
-                _context.Students.Remove(student);
+                _context.Classes.Remove(@class);
             }
 
             await _context.SaveChangesAsync();
             return RedirectToAction(nameof(Index));
         }
 
-        private bool StudentExists(int id)
+        private bool ClassExists(int id)
         {
-            return _context.Students.Any(e => e.Id == id);
+            return _context.Classes.Any(e => e.Id == id);
         }
     }
 }
