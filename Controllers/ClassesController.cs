@@ -7,16 +7,18 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using SchoolManagementApp.MVC.Data;
 using SchoolManagementApp.MVC.Models;
+using AspNetCoreHero.ToastNotification.Abstractions;
 
 namespace SchoolManagementApp.MVC.Controllers
 {
     public class ClassesController : Controller
     {
         private readonly SchoolManagementDbContext _context;
-
-        public ClassesController(SchoolManagementDbContext context)
+        private readonly INotyfService _notyfService;
+        public ClassesController(SchoolManagementDbContext context, INotyfService notyfService)
         {
             _context = context;
+            _notyfService = notyfService;
         }
 
         // GET: Classes
@@ -208,16 +210,19 @@ namespace SchoolManagementApp.MVC.Controllers
                 enrollment.ClassId = classId;
                 enrollment.StudentId = studentId;
                 await _context.AddAsync(enrollment);
+                _notyfService.Success($"Student Enrolled Successfully");
             }
             else{
                 enrollment =await _context.Enrollments.FirstOrDefaultAsync(
                     q => q.ClassId == classId && q.StudentId == studentId);
                 if(enrollment != null){
                     _context.Remove(enrollment);
+                    _notyfService.Warning($"Student Unenrolled Successfully");
+
                 }
             }
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(ManageEnrollments), new {id= classId});
+            return RedirectToAction(nameof(ManageEnrollments), new {classId= classId});
         }
 
 
